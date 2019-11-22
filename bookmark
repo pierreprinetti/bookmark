@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+data_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/bookmark"
+mkdir -p "$data_dir"
+
+bookmark_file="${BOOKMARK_FILE:-${data_dir}/bookmarks.json}"
+
+print_version() {
+	echo "Bookmark v0.1 - github.com/pierreprinetti/bookmark"
+}
+
+print_help() {
+	echo -e "Manage bookmarks."
+	echo
+	echo -e "List bookmarks:"
+	echo -e "\t${0}"
+	echo
+	echo -e "Add a new bookmark:"
+	echo -e "\t${0} <url> <description>"
+}
+
+build() {
+	local tags
+	local out
+	tags=()
+
+	while getopts t: o; do
+		case "$o" in
+			t) tags+=("$OPTARG") ;;
+			*) exit 1            ;;
+		esac
+	done
+
+	shift "$((OPTIND-1))"
+
+	local url="$1"
+	out=$(echo '{}' | jq -c ".url=\"$url\"")
+
+	if [ $# -gt 1 ]; then
+		local description="$2"
+		out="$(echo "$out" | jq -c ".description=\"$description\"")"
+	fi
+
+	for tag in "${tags[@]}"; do
+		out="$(echo "$out" | jq -c ".tags += [\"$tag\"]")"
+	done
+
+	echo "$out"
+}
+
+if [ $# -eq 0 ]; then
+	cat "$bookmark_file"
+	exit 0
+fi
+
+case "$1" in
+	-h|--help|help)    print_help    ; exit 0 ;;
+	--version|version) print_version ; exit 0 ;;
+esac
+
+build "$@" >> "$bookmark_file"
