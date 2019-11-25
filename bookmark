@@ -8,7 +8,7 @@ mkdir -p "$data_dir"
 bookmark_file="${BOOKMARK_FILE:-${data_dir}/bookmarks.json}"
 
 print_version() {
-	echo "Bookmark v0.1 - github.com/pierreprinetti/bookmark"
+	echo "Bookmark v0.2 - github.com/pierreprinetti/bookmark"
 }
 
 print_help() {
@@ -19,8 +19,18 @@ print_help() {
 	echo
 	echo -e "Add a new bookmark:"
 	echo -e "\t${0} <url> <description>"
+	echo
+	echo -e "Print the database filename:"
+	echo -e "\t${0} -F"
+	echo
+	echo -e "This help:"
+	echo -e "\t${0} --help"
+	echo
+	echo -e "Print the version string:"
+	echo -e "\t${0} --version"
 }
 
+# Build the JSON object representing the bookmark.
 build() {
 	local tags
 	local out
@@ -50,14 +60,25 @@ build() {
 	echo "$out"
 }
 
+# Add the bookmark to the database.
+add() {
+	build "$@" >> "$bookmark_file"
+}
+
+# Print the bookmark database filename.
+print_bm_file(){
+	echo "$bookmark_file"
+}
+
 if [ $# -eq 0 ]; then
 	cat "$bookmark_file"
 	exit 0
 fi
 
 case "$1" in
+	-F)                print_bm_file ; exit 0 ;;
 	-h|--help|help)    print_help    ; exit 0 ;;
 	--version|version) print_version ; exit 0 ;;
 esac
 
-build "$@" >> "$bookmark_file"
+add "$@"
